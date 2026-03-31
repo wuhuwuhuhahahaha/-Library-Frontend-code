@@ -19,9 +19,8 @@
         :data="bookList"
         border
         style="width: 100%; margin-top: 20px;"
-        v-loading="loading"
-      >
-        <el-table-column type="index" label="序号" width="60" align="center" />
+       >
+        <el-table-column prop="id" label="序号" width="60" align="center" />
         <el-table-column prop="name" label="书名" min-width="150" />
         <el-table-column prop="author" label="作者" min-width="120" />
         <el-table-column prop="stock" label="库存" width="80" align="center" />
@@ -192,32 +191,25 @@ export default {
     }
     
     // 获取图书列表
+   // ... existing code ...
+    
+    // 获取图书列表
     const getBookList = async () => {
       loading.value = true
-      try {
+      
         const params = {
           keyword: searchForm.value.keyword || undefined,
           pageNum: pagination.value.pageNum,
           pageSize: pagination.value.pageSize
         }
-        
-        const response = await bookApi.getBooks(params)
-        if (response.code === 200) {
-          bookList.value = response.data.data.list || []
-          total.value = response.data.data.total || 0
-        } else {
-          ElMessage.error(response.message || '获取图书列表失败')
-          bookList.value = []
-          total.value = 0
-        }
-      } catch (error) {
-        ElMessage.error('获取图书列表失败')
-        bookList.value = []
-        total.value = 0
-      } finally {
-        loading.value = false
-      }
+
+        const data = await bookApi.getBooks(params)
+        bookList.value =  data.list 
+        total.value = data.total || 0
+   
     }
+    
+// ... existing code ...
     
     // 搜索
     const handleSearch = () => {
