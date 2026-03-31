@@ -50,6 +50,7 @@
               size="large" 
               @click="handleLogin" 
               class="submit-btn"
+              :loading="loading"
             >
               Sign In
             </el-button>
@@ -97,6 +98,7 @@
               size="large" 
               @click="handleRegister" 
               class="submit-btn"
+              :loading="loading"
             >
               Sign Up
             </el-button>
@@ -116,18 +118,17 @@
 </template>
 
 <script>
-import { ref, reactive } from 'vue' // Vue 3 组合式 API
-import { useRouter } from 'vue-router' // Vue Router 用于页面导航
-import { ElMessage } from 'element-plus' // Element Plus 消息提示组件
+import { ref, reactive } from 'vue'
+import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
+import { login, register } from '@/api/auth'
 
 export default {
   name: 'AuthPage',
   setup() {
-    // 路由实例，用于页面跳转
     const router = useRouter()
-    
-    // 控制当前显示登录还是注册界面的状态
     const isLogin = ref(true)
+    const loading = ref(false)
     
     // 登录表单数据
     const loginForm = reactive({
@@ -184,45 +185,72 @@ export default {
     
     // 处理登录逻辑
     const handleLogin = async () => {
-      await loginFormRef.value.validate((valid) => {
-        if (valid) {
-          console.log('Login form:', loginForm)
-          // 这里应该调用实际的登录API
-          ElMessage.success('Login successful!')
-          router.push('/dashboard') // 登录成功后跳转到仪表板或其他页面
-        } else {
-          ElMessage.error('Please fill in the form correctly')
-        }
-      })
+      if (!loginFormRef.value) return
+      
+      try {
+        await loginFormRef.value.validate()
+        loading.value = true
+        
+        // 调用实际的登录API
+        const response = await login({
+          username: loginForm.username,
+          password: loginForm.password
+        })
+        
+        // 存储token到sessionStorage（符合项目规范）
+        sessionStorage.setItem('token', response.token)
+        
+        ElMessage.success('Login successful!')
+        router.push('/dashboard/users') // 登录成功后跳转到用户管理页面
+        
+      } catch (error) {
+        console.error('Login failed:', error)
+        ElMessage.error(error.message || 'Login failed')
+      } finally {
+        loading.value = false
+      }
     }
     
     // 处理注册逻辑
     const handleRegister = async () => {
-      await registerFormRef.value.validate((valid) => {
-        if (valid) {
-          console.log('Register form:', registerForm)
-          // 这里应该调用实际的注册API
-          ElMessage.success('Registration successful!')
-          isLogin.value = true // 注册成功后切换到登录页面
-        } else {
-          ElMessage.error('Please fill in the form correctly')
-        }
-      })
+      if (!registerFormRef.value) return
+      
+      try {
+        await registerFormRef.value.validate()
+        loading.value = true
+        
+        // 调用实际的注册API
+        await register({
+          username: registerForm.username,
+          email: registerForm.email,
+          password: registerForm.password
+        })
+        
+        ElMessage.success('Registration successful!')
+        isLogin.value = true // 注册成功后切换到登录页面
+        
+      } catch (error) {
+        console.error('Registration failed:', error)
+        ElMessage.error(error.message || 'Registration failed')
+      } finally {
+        loading.value = false
+      }
     }
     
     // 返回响应式数据和方法，供模板使用
     return {
-      isLogin,              // 当前是否为登录模式
-      loginForm,            // 登录表单数据
-      registerForm,         // 注册表单数据
-      loginRules,           // 登录表单验证规则
-      registerRules,        // 注册表单验证规则
-      loginFormRef,         // 登录表单引用
-      registerFormRef,      // 注册表单引用
-      switchToLogin,        // 切换到登录模式的方法
-      switchMode,           // 切换登录/注册模式的方法
-      handleLogin,          // 处理登录的方法
-      handleRegister        // 处理注册的方法
+      isLogin,
+      loginForm,
+      registerForm,
+      loginRules,
+      registerRules,
+      loginFormRef,
+      registerFormRef,
+      loading,
+      switchToLogin,
+      switchMode,
+      handleLogin,
+      handleRegister
     }
   }
 }

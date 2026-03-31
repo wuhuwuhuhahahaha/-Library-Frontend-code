@@ -1,0 +1,32 @@
+import request from './request'
+
+/**
+ * 用户登录
+ * @param {Object} data - 登录数据
+ * @param {string} data.username - 用户名
+ * @param {string} data.password - 密码
+ * @returns {Promise<Object>} 登录响应数据
+ */
+export function login(data) {
+  return request({
+    url: '/login',
+    method: 'post',
+    data
+  })
+}
+
+/**
+ * 用户注册
+ * @param {Object} data - 注册数据
+ * @param {string} data.username - 用户名
+ * @param {string} data.email - 邮箱
+ * @param {string} data.password - 密码
+ * @returns {Promise<Object>} 注册响应数据
+ */
+export function register(data) {
+  return request({
+    url: '/register',
+    method: 'post',
+    data
+  })
+}
