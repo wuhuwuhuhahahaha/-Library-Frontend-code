@@ -73,16 +73,7 @@
               />
             </el-form-item>
             
-            <el-form-item prop="email">
-              <el-input 
-                v-model="registerForm.email" 
-                placeholder="Email" 
-                type="email" 
-                size="large"
-                prefix-icon="Message"
-              />
-            </el-form-item>
-            
+     
             <el-form-item prop="password">
               <el-input 
                 v-model="registerForm.password" 
@@ -159,10 +150,7 @@ export default {
       username: [
         { required: true, message: 'Please input username', trigger: 'blur' }
       ],
-      email: [
-        { required: true, message: 'Please input email', trigger: 'blur' },
-        { type: 'email', message: 'Please input a valid email', trigger: 'blur' }
-      ],
+    
       password: [
         { required: true, message: 'Please input password', trigger: 'blur' },
         { min: 6, message: 'Password length should be at least 6 characters', trigger: 'blur' }
@@ -222,7 +210,7 @@ export default {
         // 调用实际的注册API
         await register({
           username: registerForm.username,
-          email: registerForm.email,
+        
           password: registerForm.password
         })
         

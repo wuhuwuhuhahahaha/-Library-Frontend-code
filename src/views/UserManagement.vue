@@ -10,6 +10,7 @@
       />
       <el-button type="primary" @click="handleSearch">搜索</el-button>
       <el-button @click="resetSearch">重置</el-button>
+      <el-button type="success" @click="handleAddUser" style="margin-left: auto;" >新增用户</el-button>
     </div>
 
     <!-- 表格 -->
@@ -24,8 +25,8 @@
       </el-table-column>
     </el-table>
 
-    <!-- 编辑对话框 -->
-    <el-dialog v-model="dialogVisible" title="编辑用户" width="400px">
+    <!-- 编辑/新增对话框 -->
+    <el-dialog v-model="dialogVisible" :title="dialogType === 'edit' ? '编辑用户' : '新增用户'" width="400px">
       <el-form :model="currentUser" label-width="80px">
         <el-form-item label="用户名">
           <el-input v-model="currentUser.username" placeholder="请输入用户名" />
@@ -34,7 +35,7 @@
           <el-input
             v-model="currentUser.password"
             type="password"
-            placeholder="不修改则留空"
+            placeholder="请输入密码"
             show-password
           />
         </el-form-item>
@@ -51,12 +52,13 @@
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { getUserList, updateUser, deleteUser } from '@/api/user'
-
+import { register } from '@/api/auth'
 // 响应式数据定义
 const userList = ref([])
 const searchKeyword = ref('')
 const dialogVisible = ref(false)
 const currentUser = ref({ id: null, username: '', password: '' })
+const dialogType = ref('edit') // 控制对话框类型：edit 或 add
 
 /**
  * 加载用户列表
@@ -93,20 +95,37 @@ const resetSearch = () => {
  */
 const handleEdit = (user) => {
   currentUser.value = { ...user, password: '' }
+  dialogType.value = 'edit'
   dialogVisible.value = true
 }
 
 /**
- * 保存更新
+ * 处理新增用户
+ */
+const handleAddUser = () => {
+  currentUser.value = { id: null, username: '', password: '' }
+  dialogType.value = 'add'
+  dialogVisible.value = true
+}
+
+/**
+ * 保存更新或新增
  */
 const saveUpdate = async () => {
   try {
-    await updateUser(currentUser.value)
-    ElMessage.success('更新成功')
+    if (dialogType.value === 'add') {
+      // 新增用户
+      await register(currentUser.value)
+      ElMessage.success('新增成功')
+    } else {
+      // 编辑用户
+      await updateUser(currentUser.value)
+      ElMessage.success('更新成功')
+    }
     dialogVisible.value = false
     loadUsers()
   } catch (error) {
-    console.error('更新失败:', error)
+    console.error('操作失败:', error)
   }
 }
 
@@ -151,6 +170,7 @@ onMounted(() => {
 <style scoped>
 .user-management {
   padding: 20px;
+
 }
 
 .search-bar {
