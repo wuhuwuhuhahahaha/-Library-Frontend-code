@@ -2,6 +2,11 @@ import { createRouter, createWebHistory } from 'vue-router'
 import AuthPage from '@/views/AuthPage.vue'
 import Dashboard from '@/views/Dashboard.vue'
 
+// 简单的测试组件
+const TestComponent = {
+  template: '<div><h1>测试路由成功！</h1></div>'
+}
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes: [
@@ -22,6 +27,12 @@ const router = createRouter({
       name: 'Register',
       component: AuthPage,
       meta: { title: '注册' }
+    },
+    {
+      path: '/test',
+      name: 'Test',
+      component: TestComponent,
+      meta: { title: '测试' }
     },
     {
       path: '/dashboard',
@@ -46,6 +57,12 @@ const router = createRouter({
           name: 'BookManagement',
           component: () => import('@/views/BookManagement.vue'),
           meta: { title: '图书管理' }
+        },
+        {
+          path: 'statistics',
+          name: 'Statistics',
+          component: () => import('@/views/Statistics.vue'),
+          meta: { title: '数据统计' }
         }
       ]
     }

@@ -191,22 +191,31 @@ export default {
     }
     
     // 获取图书列表
-   // ... existing code ...
-    
-    // 获取图书列表
     const getBookList = async () => {
       loading.value = true
-      
+      try {
         const params = {
           keyword: searchForm.value.keyword || undefined,
           pageNum: pagination.value.pageNum,
           pageSize: pagination.value.pageSize
         }
-
+        
         const data = await bookApi.getBooks(params)
-        bookList.value =  data.list 
-        total.value = data.total || 0
-   
+        // 根据实际后端返回的数据结构调整
+        if (data && typeof data === 'object' && !Array.isArray(data)) {
+          bookList.value = Array.isArray(data.list) ? data.list : []
+          total.value = data.total || 0
+        } else {
+          bookList.value = Array.isArray(data) ? data : []
+          total.value = bookList.value.length
+        }
+      } catch (error) {
+        console.error('加载图书列表失败:', error)
+        bookList.value = []
+        total.value = 0
+      } finally {
+        loading.value = false
+      }
     }
     
 // ... existing code ...
@@ -265,24 +274,16 @@ export default {
         
         if (bookForm.value.id) {
           // 编辑
-          const response = await bookApi.updateBook(bookForm.value)
-          if (response.code === 200) {
-            ElMessage.success('编辑图书成功')
-            dialogVisible.value = false
-            getBookList()
-          } else {
-            ElMessage.error(response.message || '编辑图书失败')
-          }
+          await bookApi.updateBook(bookForm.value)
+          ElMessage.success('编辑图书成功')
+          dialogVisible.value = false
+          getBookList()
         } else {
           // 新增
-          const response = await bookApi.addBook(bookForm.value)
-          if (response.code === 200) {
-            ElMessage.success('新增图书成功')
-            dialogVisible.value = false
-            getBookList()
-          } else {
-            ElMessage.error(response.message || '新增图书失败')
-          }
+          await bookApi.addBook(bookForm.value)
+          ElMessage.success('新增图书成功')
+          dialogVisible.value = false
+          getBookList()
         }
       } catch (error) {
         ElMessage.error('表单验证失败')
@@ -297,13 +298,9 @@ export default {
         type: 'warning'
       }).then(async () => {
         try {
-          const response = await bookApi.deleteBook(id)
-          if (response.code === 200) {
-            ElMessage.success('删除图书成功')
-            getBookList()
-          } else {
-            ElMessage.error(response.message || '删除图书失败')
-          }
+          await bookApi.deleteBook(id)
+          ElMessage.success('删除图书成功')
+          getBookList()
         } catch (error) {
           ElMessage.error('删除图书失败')
         }
@@ -326,15 +323,37 @@ export default {
     // 确认借书
     const confirmBorrow = async () => {
       try {
-        const response = await bookApi.borrowBook({ bookName: borrowForm.value.bookName })
-        if (response.code === 200) {
-          ElMessage.success('借书成功')
-          borrowDialogVisible.value = false
-          getBookList()
-        } else {
-          ElMessage.error(response.message || '借书失败')
+        // 从 sessionStorage 获取 token 并解析用户名
+        const token = sessionStorage.getItem('token')
+        if (!token) {
+          ElMessage.error('请先登录')
+          return
         }
+        
+        // 解析 JWT token 获取用户名
+        let username = ''
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]))
+          username = payload.username || payload.sub // 根据后端 JWT 结构调整
+        } catch (parseError) {
+          console.error('解析用户信息失败:', parseError)
+          ElMessage.error('用户信息无效，请重新登录')
+          return
+        }
+        
+        // 根据项目规范，响应拦截器已处理错误，try 块内无需再判断 code
+        await bookApi.borrowBook({ 
+          username: username,
+          bookName: borrowForm.value.bookName 
+        })
+        // 如果执行到这里，说明借书成功
+        ElMessage.success('借书成功')
+        borrowDialogVisible.value = false
+        getBookList()
       } catch (error) {
+        console.error('借书失败:', error)
+        // 错误已经在响应拦截器中处理过了，这里可以不显示重复提示
+        // 或者显示通用错误信息
         ElMessage.error('借书失败')
       }
     }
@@ -353,17 +372,13 @@ export default {
         await returnFormRef.value.validate()
         
         // 根据 API 定义，returnBook 接收 params 参数
-        const response = await bookApi.returnBook({
+        await bookApi.returnBook({
           userName: returnForm.value.userName,
           bookName: returnForm.value.bookName
         })
-        if (response.code === 200) {
-          ElMessage.success('还书成功')
-          returnDialogVisible.value = false
-          getBookList()
-        } else {
-          ElMessage.error(response.message || '还书失败')
-        }
+        ElMessage.success('还书成功')
+        returnDialogVisible.value = false
+        getBookList()
       } catch (error) {
         ElMessage.error('表单验证失败')
       }

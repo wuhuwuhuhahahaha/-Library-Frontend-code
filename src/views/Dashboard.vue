@@ -7,11 +7,18 @@
       </el-header>
       <el-container>
         <el-aside width="200px" class="aside">
-          <ul class="menu">
-            <li><router-link to="/dashboard/users">用户管理</router-link></li>
-            <li><router-link to="/dashboard/borrow">借阅管理</router-link></li>
-            <li><router-link to="/dashboard/book">图书管理</router-link></li>
-          </ul>
+          <el-menu
+            :default-active="$route.path"
+            background-color="#34495e"
+            text-color="#fff"
+            active-text-color="#2ecc71"
+            class="menu"
+          >
+            <el-menu-item index="/dashboard/users" @click="$router.push('/dashboard/users')">用户管理</el-menu-item>
+            <el-menu-item index="/dashboard/borrow" @click="$router.push('/dashboard/borrow')">借阅管理</el-menu-item>
+            <el-menu-item index="/dashboard/book" @click="$router.push('/dashboard/book')">图书管理</el-menu-item>
+            <el-menu-item index="/dashboard/statistics" @click="$router.push('/dashboard/statistics')">数据统计</el-menu-item>
+          </el-menu>
         </el-aside>
         <el-main class="main">
           <router-view></router-view>
@@ -63,32 +70,8 @@ export default {
 }
 
 .menu {
-  list-style: none;
-  padding: 0;
-  margin: 20px 0;
-}
-
-.menu li {
-  margin-bottom: 10px;
-}
-
-.menu a {
-  display: block;
-  padding: 12px 20px;
-  color: white;
-  text-decoration: none;
-  transition: all 0.3s;
-  border-radius: 4px;
-  margin: 0 10px;
-}
-
-.menu a:hover {
-  background-color: #2c3e50;
-  transform: translateX(5px);
-}
-
-.menu a.router-link-active {
-  background-color: #2ecc71;
+  border-right: none;
+  margin-top: 20px;
 }
 
 .main {

@@ -40,14 +40,7 @@
         </el-table-column>
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="scope">
-            <el-button 
-              size="small" 
-              type="warning" 
-              @click="handleReturnBook(scope.row)"
-              :disabled="!!scope.row.returnTime"
-            >
-              还书
-            </el-button>
+       
             <el-button size="small" type="danger" @click="handleDelete(scope.row.id)">删除</el-button>
           </template>
         </el-table-column>
@@ -174,27 +167,8 @@ export default {
       ]
     }
     
-    // 获取借阅列表
-    const getBorrowList = async () => {
-      loading.value = true
-      
-      try {
-        const params = {
-          username: searchForm.value.username || undefined,
-          bookName: searchForm.value.bookName || undefined,
-          pageNum: pagination.value.pageNum,
-          pageSize: pagination.value.pageSize
-        }
-
-        const data = await borrowApi.getBorrowList(params)
-        borrowList.value = data.list || []
-        total.value = data.total || 0
-      } catch (error) {
-        ElMessage.error('获取借阅列表失败')
-      } finally {
-        loading.value = false
-      }
-    }
+    // 获取借阅列表函数定义
+    let getBorrowList
     
     // 搜索
     const handleSearch = () => {
@@ -239,14 +213,10 @@ export default {
       try {
         await borrowFormRef.value.validate()
         
-        const response = await borrowApi.borrowBook(borrowForm.value)
-        if (response.code === 200) {
-          ElMessage.success('借书成功')
-          borrowDialogVisible.value = false
-          getBorrowList()
-        } else {
-          ElMessage.error(response.message || '借书失败')
-        }
+        await borrowApi.borrowBook(borrowForm.value)
+        ElMessage.success('借书成功')
+        borrowDialogVisible.value = false
+        getBorrowList()
       } catch (error) {
         if (error.response && error.response.data) {
           ElMessage.error(error.response.data.message || '借书失败')
@@ -272,17 +242,13 @@ export default {
       try {
         await returnFormRef.value.validate()
         
-        const response = await borrowApi.returnBook({
+        await borrowApi.returnBook({
           userName: returnForm.value.userName,
           bookName: returnForm.value.bookName
         })
-        if (response.code === 200) {
-          ElMessage.success('还书成功')
-          returnDialogVisible.value = false
-          getBorrowList()
-        } else {
-          ElMessage.error(response.message || '还书失败')
-        }
+        ElMessage.success('还书成功')
+        returnDialogVisible.value = false
+        getBorrowList()
       } catch (error) {
         if (error.response && error.response.data) {
           ElMessage.error(error.response.data.message || '还书失败')
@@ -300,13 +266,9 @@ export default {
         type: 'warning'
       }).then(async () => {
         try {
-          const response = await borrowApi.deleteBorrow(id)
-          if (response.code === 200) {
-            ElMessage.success('删除成功')
-            getBorrowList()
-          } else {
-            ElMessage.error(response.message || '删除失败')
-          }
+          await borrowApi.deleteBorrow(id)
+          ElMessage.success('删除成功')
+          getBorrowList()
         } catch (error) {
           if (error.response && error.response.data) {
             ElMessage.error(error.response.data.message || '删除失败')
@@ -338,6 +300,28 @@ export default {
       returnForm.value = {
         userName: '',
         bookName: ''
+      }
+    }
+    
+    // 获取借阅列表 - 在所有依赖函数定义后初始化
+    getBorrowList = async () => {
+      loading.value = true
+      
+      try {
+        const params = {
+          username: searchForm.value.username || undefined,
+          bookName: searchForm.value.bookName || undefined,
+          pageNum: pagination.value.pageNum,
+          pageSize: pagination.value.pageSize
+        }
+
+        const data = await borrowApi.getBorrowList(params)
+        borrowList.value = data.list || []
+        total.value = data.total || 0
+      } catch (error) {
+        ElMessage.error('获取借阅列表失败')
+      } finally {
+        loading.value = false
       }
     }
     

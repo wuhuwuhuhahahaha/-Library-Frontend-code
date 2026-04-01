@@ -185,11 +185,18 @@ export default {
           password: loginForm.password
         })
         
-        // 存储token到sessionStorage（符合项目规范）
-        sessionStorage.setItem('token', response.token)
-        
-        ElMessage.success('Login successful!')
-        router.push('/dashboard/users') // 登录成功后跳转到用户管理页面
+        // 根据响应拦截器逻辑，response 应该是业务数据对象
+        // 如果后端返回 { code: 200, data: { token: "xxx" } }
+        // 那么这里 response 就是 { token: "xxx" }
+        const token = response.token || response.data?.token
+        if (token) {
+          // 存储token到sessionStorage（符合项目规范）
+          sessionStorage.setItem('token', token)
+          ElMessage.success('Login successful!')
+          router.push('/dashboard/users') // 登录成功后跳转到用户管理页面
+        } else {
+          ElMessage.error('Invalid response from server')
+        }
         
       } catch (error) {
         console.error('Login failed:', error)
