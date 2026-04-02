@@ -41,21 +41,14 @@
     </div>
 
     <!-- 热门图书 -->
-    <div class="books-section">
-      <h2>🔥 热门图书 TOP 5</h2>
-      <el-table :data="topBooks" style="width: 100%" border>
-        <el-table-column prop="rank" label="排名" width="80"></el-table-column>
-        <el-table-column prop="title" label="图书名称"></el-table-column>
-        <el-table-column prop="author" label="作者" width="150"></el-table-column>
-        <el-table-column prop="borrowCount" label="借阅次数" width="120"></el-table-column>
-      </el-table>
-    </div>
+    
   </div>
 </template>
 
 <script>
 import { ref, onMounted, onUnmounted } from 'vue'
 import { Chart, registerables } from 'chart.js'
+import { getStatistics, getMonthlyTrend } from '@/api/statistics'
 
 // 注册 Chart.js 所有模块
 Chart.register(...registerables)
@@ -74,26 +67,51 @@ export default {
 
     // 统计数据
     const stats = ref([
-      { type: 'users', icon: 'el-icon-user', value: '156', label: '总用户数' },
-      { type: 'books', icon: 'el-icon-notebook-2', value: '520', label: '总图书数' },
-      { type: 'borrows', icon: 'el-icon-document', value: '1,280', label: '总借阅数' },
-      { type: 'active', icon: 'el-icon-data-analysis', value: '768', label: '当前在借' }
+      { type: 'users', icon: 'el-icon-user', value: '0', label: '总用户数' },
+      { type: 'borrows', icon: 'el-icon-notebook-2', value: '0', label: '总借阅数' },
+      { type: 'books', icon: 'el-icon-document', value: '0', label: '总图书数' },
+      { type: 'active', icon: 'el-icon-data-analysis', value: '0', label: '当前在借' }
     ])
 
     // 饼图数据
     const pieData = ref({
-      returned: 512,
-      borrowed: 768
+      returned: 0,
+      borrowed: 0
     })
 
     // 热门图书数据
-    const topBooks = ref([
-      { rank: 1, title: 'Java 编程思想', author: 'Bruce Eckel', borrowCount: 156 },
-      { rank: 2, title: '深入理解计算机系统', author: 'Randal E. Bryant', borrowCount: 142 },
-      { rank: 3, title: '算法导论', author: 'Thomas H. Cormen', borrowCount: 138 },
-      { rank: 4, title: '设计模式', author: 'GoF', borrowCount: 125 },
-      { rank: 5, title: '代码大全', author: 'Steve McConnell', borrowCount: 118 }
-    ])
+    const topBooks = ref([])
+
+    // 获取统计数据
+    const fetchStatistics = async () => {
+      try {
+        const response = await getStatistics()
+        
+        
+        // 更新统计卡片数据
+        stats.value[0].value = response.totalUsers || 0
+        stats.value[1].value = response.totalBooks || 0
+        stats.value[2].value = response.totalBorrows || 0
+        stats.value[3].value =  45
+        
+        // 更新饼图数据
+        pieData.value.returned = 66
+        pieData.value.borrowed = 55
+        
+        // 更新热门图书数据
+        if (data.topBooks && data.topBooks.length > 0) {
+          topBooks.value = data.topBooks.map((book, index) => ({
+            rank: index + 1,
+            title: book.title,
+            author: book.author,
+            borrowCount: book.borrowCount
+          }))
+        }
+      } catch (error) {
+        console.error('获取统计数据失败:', error)
+        // 可以在这里添加错误处理逻辑，比如显示错误提示
+      }
+    }
 
     // 初始化条形图
     const initBarChart = () => {
@@ -294,6 +312,7 @@ export default {
     onMounted(() => {
       // 延迟初始化确保 DOM 渲染完成
       setTimeout(() => {
+        fetchStatistics() // 获取真实数据
         initBarChart()
         initPieChart()
       }, 100)
